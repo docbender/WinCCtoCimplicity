@@ -1,0 +1,623 @@
+Function actionVisible(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Visible.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.Visible.Dynamic
+        result$ = result$ & "|scriptVisible=" & script2hex(script.SourceCode)
+    ElseIf (obj.Visible.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.Visible.Dynamic
+        result$ = result$ & "|dialogVisible=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.Visible.DynamicStateType > 0) Then
+        result$ = result$
+    End If
+    
+    actionVisible = result$
+End Function
+
+Function actionBackColor(obj As HMIObject) As String
+    result$ = ""
+    If (obj.BackColor.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.BackColor.Dynamic
+        result$ = result$ & "|scriptBackColor=" & script2hex(script.SourceCode)
+    ElseIf (obj.BackColor.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.BackColor.Dynamic
+        result$ = result$ & "|dialogBackColor=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.BackColor.DynamicStateType > 0) Then
+        result$ = result$
+    End If
+    
+    actionBackColor = result$
+End Function
+
+Function actionForeColor(obj As HMIStaticText) As String
+    result$ = ""
+    If (obj.ForeColor.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.ForeColor.Dynamic
+        result$ = result$ & "|scriptForeColor=" & script2hex(script.SourceCode)
+    ElseIf (obj.ForeColor.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.ForeColor.Dynamic
+        result$ = result$ & "|dialogForeColor=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.ForeColor.DynamicStateType > 0) Then
+        result$ = result$
+    End If
+    
+    actionForeColor = result$
+End Function
+
+Function actionFlashingLine(obj As HMIObject) As String
+    result$ = ""
+    
+    If (obj.FlashBorderColor.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.FlashBorderColor.Dynamic
+        result$ = result$ & "|scriptFlashingLine=" & script2hex(script.SourceCode)
+    ElseIf (obj.FlashBorderColor.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.FlashBorderColor.Dynamic
+        result$ = result$ & "|dialogFlashingLine=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.FlashBorderColor.DynamicStateType > 0) Then
+        
+    End If
+    
+    If (Len(result$) > 0) Then
+        result$ = result$ & "|flashingLineColorOn=" & obj.BorderFlashColorOn
+        result$ = result$ & "|flashingLineColorOff=" & obj.BorderFlashColorOff
+    End If
+    
+    actionFlashingLine = result$
+End Function
+
+Function actionFlashingBackground(obj As HMIObject) As String
+    result$ = ""
+    
+    If (obj.FlashBackColor.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.FlashBackColor.Dynamic
+        result$ = result$ & "|scriptFlashingBackground=" & script2hex(script.SourceCode)
+    ElseIf (obj.FlashBackColor.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.FlashBackColor.Dynamic
+        result$ = result$ & "|dialogFlashingBackground=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.FlashBackColor.DynamicStateType > 0) Then
+        
+    End If
+    
+    If (Len(result$) > 0) Then
+        result$ = result$ & "|backgroundColorOn=" & obj.BackFlashColorOn
+        result$ = result$ & "|backgroundColorOff=" & obj.BackFlashColorOff
+    End If
+    
+    actionFlashingBackground = result$
+End Function
+
+Function actionFlashingText(obj As HMIStaticText) As String
+    result$ = ""
+    
+    If (obj.FlashForeColor.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.FlashForeColor.Dynamic
+        result$ = result$ & "|scriptFlashingText=" & script2hex(script.SourceCode)
+    ElseIf (obj.FlashForeColor.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.FlashForeColor.Dynamic
+        result$ = result$ & "|dialogFlashingText=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.FlashForeColor.DynamicStateType > 0) Then
+        
+    End If
+    
+    If (Len(result$) > 0) Then
+        result$ = result$ & "|flashingTextColorOn=" & obj.ForeFlashColorOn
+        result$ = result$ & "|flashingTextColorOff=" & obj.ForeFlashColorOff
+    End If
+    
+    actionFlashingText = result$
+End Function
+
+Function eventLeftButton(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Events.Count > 0) Then
+        For i = 1 To obj.Events.Count
+            If (obj.Events(i).EventType = hmiEventTypeMouseLButtonDown) Then
+                If (obj.Events(i).Actions.Count > 0) Then
+                    If (obj.Events(i).Actions(1).ActionType = hmiActionTypeScript) Then
+                        Dim script As HMIScriptInfo
+                        Set script = obj.Events(i).Actions(1)
+                        result$ = "|eventLeftButton=" & script2hex(script.SourceCode)
+                    End If
+                End If
+                Exit For
+            End If
+        Next i
+    End If
+    eventLeftButton = result$
+End Function
+
+Function eventRightButton(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Events.Count > 0) Then
+        For i = 1 To obj.Events.Count
+            If (obj.Events(i).EventType = hmiEventTypeMouseRButtonDown) Then
+                If (obj.Events(i).Actions.Count > 0) Then
+                    If (obj.Events(i).Actions(1).ActionType = hmiActionTypeScript) Then
+                        Dim script As HMIScriptInfo
+                        Set script = obj.Events(i).Actions(1)
+                        result$ = "|eventRightButton=" & script2hex(script.SourceCode)
+                    End If
+                End If
+                Exit For
+            End If
+        Next i
+    End If
+    eventRightButton = result$
+End Function
+
+Function processHMIStatusDisplay(obj As HMIStatusDisplay)
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIStatusDisplay = "Name=" & getObjectName(obj.ObjectName) & "|Type=StatusDisplay|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIStatusDisplay = processHMIStatusDisplay & "|basePicture=" & obj.BasePicture
+    
+    If (obj.index.IsDynamicable And obj.index.DynamicStateType = 3) Then
+        Dim script As HMIScriptInfo
+        Set script = obj.index.Dynamic
+        
+        processHMIStatusDisplay = processHMIStatusDisplay & "|scriptState=" & script2hex(script.SourceCode)
+    End If
+    processHMIStatusDisplay = processHMIStatusDisplay & actionVisible(obj) & eventLeftButton(obj)
+End Function
+
+Function processHMIStatusText(obj As HMIStaticText)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIStatusText = "Name=" & getObjectName(obj.ObjectName) & "|Type=StaticText|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIStatusText = processHMIStatusText & "|backColor=" & obj.BackColor & "|foreColor=" & obj.ForeColor & "|fillStyle=" & obj.FillStyle.value
+    processHMIStatusText = processHMIStatusText & "|xAlign=" & obj.AlignmentLeft & "|yAlign=" & obj.AlignmentTop & "|fontSize=" & obj.FONTSIZE
+   
+    If (obj.Text.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.Text.Dynamic
+        processHMIStatusText = processHMIStatusText & "|scriptText=" & script2hex(script.SourceCode)
+    ElseIf (obj.Text.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.Text.Dynamic
+        processHMIStatusText = processHMIStatusText & "|dialogText=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.Text.DynamicStateType > 0) Then
+        processHMIStatusText = processHMIStatusText
+    End If
+    
+    processHMIStatusText = processHMIStatusText & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj)
+    
+    processHMIStatusText = processHMIStatusText & "|text=" & Replace(Replace(obj.Text.value, Chr(13) & Chr(10), "@#$"), "=", "@#&")
+    processHMIStatusText = processHMIStatusText & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMIIOField(obj As HMIIOField)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    Dim actiontrigger As HMIVariableTrigger
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIIOField = "Name=" & getObjectName(obj.ObjectName) & "|Type=IOField|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIIOField = processHMIIOField & "|xAlign=" & obj.AlignmentLeft & "|yAlign=" & obj.AlignmentTop & "|fontSize=" & obj.FONTSIZE
+    processHMIIOField = processHMIIOField & "|backColor=" & obj.BackColor & "|fillStyle=" & obj.FillStyle.value
+    processHMIIOField = processHMIIOField & actionVisible(obj)
+
+    If (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
+        Set actiontrigger = obj.OutputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|outputValue=" & actiontrigger.VarName
+    ElseIf (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.OutputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|scriptOutputValue=" & script2hex(script.SourceCode)
+    ElseIf (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.OutputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|outputValue=" & functionCorrection(dialog.SourceCode)
+    End If
+    If (obj.InputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
+        Set actiontrigger = obj.InputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|inputValue=" & actiontrigger.VarName
+    ElseIf (obj.InputValue.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.InputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|scriptInputValue=" & script2hex(script.SourceCode)
+    ElseIf (obj.InputValue.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.InputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|inputValue=" & functionCorrection(dialog.SourceCode)
+    End If
+    processHMIIOField = processHMIIOField & "|dataFormat=" & obj.DataFormat & "|outputFormat=" & obj.OutputFormat
+    processHMIIOField = processHMIIOField & eventLeftButton(obj)
+End Function
+
+Function processHMIRectangle(obj As HMIRectangle)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIRectangle = "Name=" & getObjectName(obj.ObjectName) & "|Type=Rectangle|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    
+    processHMIRectangle = processHMIRectangle & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
+    processHMIRectangle = processHMIRectangle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
+    processHMIRectangle = processHMIRectangle & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMIRoundRectangle(obj As HMIRoundRectangle)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIRoundRectangle = "Name=" & getObjectName(obj.ObjectName) & "|Type=RoundRectangle|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIRoundRectangle = processHMIRoundRectangle & "|roundCornerWidth=" & obj.RoundCornerWidth & "|roundCornerHeight=" & obj.RoundCornerHeight
+    
+    processHMIRoundRectangle = processHMIRoundRectangle & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
+    processHMIRoundRectangle = processHMIRoundRectangle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
+    processHMIRoundRectangle = processHMIRoundRectangle & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMICircle(obj As HMICircle)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMICircle = "Name=" & getObjectName(obj.ObjectName) & "|Type=Circle|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMICircle = processHMICircle & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
+    processHMICircle = processHMICircle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
+    processHMICircle = processHMICircle & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMIEllipse(obj As HMIEllipse)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIEllipse = "Name=" & getObjectName(obj.ObjectName) & "|Type=Ellipse|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIEllipse = processHMIEllipse & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
+    processHMIEllipse = processHMIEllipse & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
+    processHMIEllipse = processHMIEllipse & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMILine(obj As HMILine)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMILine = "Name=" & getObjectName(obj.ObjectName) & "|Type=Line|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMILine = processHMILine & "|backColor=" & obj.BorderBackColor & "|borderColor=" & obj.BorderColor & "|lineStyle=" & obj.BorderStyle.value & "|lineWeight=" & obj.BorderWidth.value & "|lineEndStyle=" & obj.BorderEndStyle.value
+    processHMILine = processHMILine & actionVisible(obj) & actionFlashingLine(obj)
+End Function
+
+Function processHMIPolyline(obj As HMIPolyLine)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIPolyline = "Name=" & getObjectName(obj.ObjectName) & "|Type=Polyline|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIPolyline = processHMIPolyline & "|backColor=" & obj.BorderBackColor & "|borderColor=" & obj.BorderColor & "|lineStyle=" & obj.BorderStyle.value & "|lineWeight=" & obj.BorderWidth.value & "|lineEndStyle=" & obj.BorderEndStyle.value
+    
+    points$ = ""
+    For i = 1 To obj.PointCount
+        obj.index = i
+        If (Len(points$) > 0) Then
+            points$ = points$ & ";"
+        End If
+        points$ = points$ & obj.ActualPointLeft & "x" & obj.ActualPointTop
+    Next i
+    
+    processHMIPolyline = processHMIPolyline & "|points=" & points$
+    processHMIPolyline = processHMIPolyline & actionVisible(obj) & actionFlashingLine(obj)
+End Function
+
+Function processHMICircularArc(obj As HMICircularArc)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMICircularArc = "Name=" & getObjectName(obj.ObjectName) & "|Type=CircularArc|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMICircularArc = processHMICircularArc & "|startAngle=" & obj.StartAngle & "|endAngle=" & obj.EndAngle & "|radius=" & obj.Radius
+    processHMICircularArc = processHMICircularArc & "|backColor=" & obj.BorderBackColor & "|borderColor=" & obj.BorderColor & "|lineStyle=" & obj.BorderStyle.value & "|lineWeight=" & obj.BorderWidth.value
+    processHMICircularArc = processHMICircularArc & actionVisible(obj) & actionFlashingLine(obj)
+End Function
+
+Function processHMIGroup(obj As HMIGroup)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = obj.GroupParent.ObjectName
+    End If
+    processHMIGroup = "Name=" & getObjectName(obj.ObjectName) & "|Type=Group|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    l% = obj.GroupedHMIObjects.Count
+    groupObjects$ = ""
+    For i = 1 To l%
+        go$ = getObjectName(obj.GroupedHMIObjects.Item(i).ObjectName)
+        
+        If (Len(groupObjects$) > 0) Then
+            groupObjects$ = groupObjects$ & ";"
+        End If
+        groupObjects$ = groupObjects$ & go$
+    Next i
+    
+    processHMIGroup = processHMIGroup & "|groupObjects=" & groupObjects$
+    processHMIGroup = processHMIGroup & actionVisible(obj)
+    processHMIGroup = processHMIGroup & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMI3DPipe(obj As HMIObject)
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMI3DPipe = "Name=" & getObjectName(obj.ObjectName) & "|Type=Pipe|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+End Function
+
+Function processHMIObject(obj As HMIObject)
+    Dim script As HMIScriptInfo
+    Dim dialog As HMIDynamicDialog
+    
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIObject = "Name=" & getObjectName(obj.ObjectName) & "|Type=Object|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    
+    processHMIObject = processHMIObject & actionVisible(obj) & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function processHMIButton(obj As HMIButton)
+    group$ = ""
+    If (Not obj.GroupParent Is Nothing) Then
+        group$ = getObjectName(obj.GroupParent.ObjectName)
+    End If
+    processHMIButton = "Name=" & getObjectName(obj.ObjectName) & "|Type=Button|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
+    processHMIButton = processHMIButton & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|foreColor=" & obj.ForeColor & "|fillStyle=" & obj.FillStyle.value
+    processHMIButton = processHMIButton & "|xAlign=" & obj.AlignmentLeft & "|yAlign=" & obj.AlignmentTop & "|fontSize=" & obj.FONTSIZE
+   
+    If (obj.Text.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.Text.Dynamic
+        processHMIButton = processHMIButton & "|scriptText=" & script2hex(script.SourceCode)
+    ElseIf (obj.Text.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.Text.Dynamic
+        processHMIButton = processHMIButton & "|dialogText=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.Text.DynamicStateType > 0) Then
+        processHMIButton = processHMIButton
+    End If
+    
+    processHMIButton = processHMIButton & "|text=" & Replace(Replace(obj.Text.value, Chr(13) & Chr(10), "@#$"), "=", "@#&")
+    processHMIButton = processHMIButton & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
+    processHMIButton = processHMIButton & eventLeftButton(obj) & eventRightButton(obj)
+End Function
+
+Function getCharts(doc As Document) As String
+    result$ = ""
+    For i = 1 To doc.HMIObjects.Count
+        Dim obj As HMIObject
+        Set obj = Application.ActiveDocument.HMIObjects(i)
+        If (obj.Type Like "HMIButton") Then
+            If (obj.Events.Count > 0) Then
+                For j = 1 To obj.Events.Count
+                    If (obj.Events(j).EventType = hmiEventTypeMouseRButtonDown) Then
+                        If (obj.Events(j).Actions.Count > 0) Then
+                            If (obj.Events(j).Actions(1).ActionType = hmiActionTypeScript) Then
+                                Dim script As HMIScriptInfo
+                                Set script = obj.Events(j).Actions(1)
+                                pos& = InStr(1, script.SourceCode, "Dlg_Kurver(")
+                                If (pos& > 0) Then
+                                    pos& = pos& + Len("Dlg_Kurver(")
+                                    pos2& = InStr(pos& + 1, script.SourceCode, ")")
+                                    If (pos2& > 0) Then
+                                        If (Len(result$) > 0) Then
+                                            result$ = result$ & ";"
+                                        End If
+                                        result$ = result$ & Trim(Replace(Mid(script.SourceCode, pos&, pos2& - pos& - 1), """", ""))
+                                    End If
+                                End If
+                            End If
+                        End If
+                        Exit For
+                    End If
+                Next j
+            End If
+        End If
+    Next i
+    
+    getCharts = result$
+End Function
+
+Function getObjectName(name As String) As String
+    getObjectName = Replace(name, "/", "_")
+End Function
+
+
+Function script2hex(ByRef script As String) As String
+    l& = Len(script)
+    i& = 0
+    script2hex = ""
+    Do While i& < l&
+        i& = i& + 1
+        script2hex = script2hex & Right$(Hex(&H1000000 Or CInt(Asc(Mid(script, i&, 1)))), 2)
+    Loop
+End Function
+
+Function functionCorrection(ByRef script As String) As String
+    result$ = Replace(Replace(Replace(script, "'||'", "' or '"), "'||", "' or"), "||'", "or '")
+    result$ = Replace(Replace(Replace(result$, "'&&'", "' and '"), "'&&", "' and"), "&&'", "and '")
+    functionCorrection = Replace(Replace(result$, "||", "or"), "&&", "and")
+End Function
+
+Sub objectsexport(doc As Document)
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    Set f = fs.CreateTextFile("c:\export\" & doc.name & ".txt", True)
+    
+    Count% = 0
+    IsDynamicable% = 0
+   
+    For i = 1 To doc.HMIObjects.Count
+        Dim obj As HMIObject
+        Set obj = Application.ActiveDocument.HMIObjects(i)
+
+        If (obj.Type Like "HMIStatusDisplay") Then
+            Dim objd As HMIStatusDisplay
+            Set objd = obj
+            'If (objd.index.IsDynamicable And objd.index.DynamicStateType = 3) Then
+                dataline$ = processHMIStatusDisplay(objd)
+                f.WriteLine (dataline$)
+            '    IsDynamicable% = IsDynamicable% + 1
+            'End If
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIStaticText") Then
+            Dim objt As HMIStaticText
+            Set objt = obj
+            If (objt.Text.DynamicStateType > 0 Or objt.BackColor.DynamicStateType > 0) Then
+                IsDynamicable% = IsDynamicable% + 1
+            End If
+            
+            dataline$ = processHMIStatusText(objt)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIIOField") Then
+            Dim objf As HMIIOField
+            Set objf = obj
+            dataline$ = processHMIIOField(objf)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIRectangle") Then
+            Dim objr As HMIRectangle
+            Set objr = obj
+            dataline$ = processHMIRectangle(objr)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIRoundRectangle") Then
+            Dim objrr As HMIRoundRectangle
+            Set objrr = obj
+            dataline$ = processHMIRoundRectangle(objrr)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMICircle") Then
+            Dim objc As HMICircle
+            Set objc = obj
+            dataline$ = processHMICircle(objc)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIEllipse") Then
+            Dim obje As HMIEllipse
+            Set obje = obj
+            dataline$ = processHMIEllipse(obje)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMILine") Then
+            Dim objl As HMILine
+            Set objl = obj
+            dataline$ = processHMILine(objl)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIPolyLine") Then
+            Dim objpl As HMIPolyLine
+            Set objpl = obj
+            dataline$ = processHMIPolyline(objpl)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMICircularArc") Then
+            Dim objca As HMICircularArc
+            Set objca = obj
+            dataline$ = processHMICircularArc(objca)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIGroup") Then
+            Dim objg As HMIGroup
+            Set objg = obj
+            dataline$ = processHMIGroup(objg)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMICustom*" And obj.ObjectName Like "3DHorizontalPipe*") Then
+            dataline$ = processHMI3DPipe(obj)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        ElseIf (obj.Type Like "HMIButton") Then
+            Dim objb As HMIButton
+            Set objb = obj
+            dataline$ = processHMIButton(objb)
+            f.WriteLine (dataline$)
+            
+            Count% = Count% + 1
+        Else
+            'MsgBox obj.Type
+            If (obj.Visible.DynamicStateType > 0) Then
+                dataline$ = processHMIObject(obj)
+                f.WriteLine (dataline$)
+                IsDynamicable% = IsDynamicable% + 1
+            End If
+        End If
+    Next i
+    
+    ch$ = getCharts(doc)
+    If (Len(ch$) > 0) Then
+        f.WriteLine ("Name=chart|Type=chart|ToolTip=|definition=" & ch$)
+    End If
+    
+    f.Close
+    'MsgBox "HMIStatusDisplay=" & Count% & "|IsDynamicable=" & IsDynamicable%
+End Sub
+
+Sub exportAll()
+
+    Dim doc As Document
+    screens& = 0
+    processed& = 0
+    
+    fileName$ = Dir(Application.ApplicationDataPath & "\*pdl")
+    
+    Do While (Len(fileName$) > 0)
+        If (Not (LCase(fileName$) Like "*old.pdl") And Not (LCase(fileName$) Like "*backup.pdl")) Then
+            Set doc = Application.Documents.Open(fileName$, hmiOpenDocumentTypeInvisible)
+            If (doc.Width = 1280 And doc.Height = 1024) Then
+                objectsexport doc
+                processed& = processed& + 1
+            End If
+            doc.Close
+        End If
+        fileName$ = Dir
+        screens& = screens& + 1
+    Loop
+    
+    
+    MsgBox "Zpracovano " & processed& & "/" & screens&
+End Sub
+
+Sub exportCurrent()
+    objectsexport Application.ActiveDocument
+    MsgBox "Hotovo"
+End Sub
+
+
+
