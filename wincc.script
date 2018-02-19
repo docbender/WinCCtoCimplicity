@@ -28,7 +28,7 @@ Function actionBackColor(obj As HMIObject) As String
     actionBackColor = result$
 End Function
 
-Function actionForeColor(obj As HMIStaticText) As String
+Function actionForeColor(obj As HMIObject) As String
     result$ = ""
     If (obj.ForeColor.DynamicStateType = hmiDynamicStateTypeScript) Then
         Set script = obj.ForeColor.Dynamic
@@ -85,7 +85,7 @@ Function actionFlashingBackground(obj As HMIObject) As String
     actionFlashingBackground = result$
 End Function
 
-Function actionFlashingText(obj As HMIStaticText) As String
+Function actionFlashingText(obj As HMIObject) As String
     result$ = ""
     
     If (obj.FlashForeColor.DynamicStateType = hmiDynamicStateTypeScript) Then
@@ -200,8 +200,8 @@ Function processHMIIOField(obj As HMIIOField)
     End If
     processHMIIOField = "Name=" & getObjectName(obj.ObjectName) & "|Type=IOField|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     processHMIIOField = processHMIIOField & "|xAlign=" & obj.AlignmentLeft & "|yAlign=" & obj.AlignmentTop & "|fontSize=" & obj.FONTSIZE
-    processHMIIOField = processHMIIOField & "|backColor=" & obj.BackColor & "|fillStyle=" & obj.FillStyle.value
-    processHMIIOField = processHMIIOField & actionVisible(obj)
+    processHMIIOField = processHMIIOField & "|backColor=" & obj.BackColor & "|fillStyle=" & obj.FillStyle.value & "|foreColor=" & obj.ForeColor
+    processHMIIOField = processHMIIOField & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj)
 
     If (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
         Set actiontrigger = obj.OutputValue.Dynamic

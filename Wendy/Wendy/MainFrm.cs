@@ -196,7 +196,14 @@ namespace Wendy
                 tbTranslation.Text = translation;
 
                 if (AutoCopy && translation.Length > 0)
-                    Clipboard.SetText(translation);
+                    try
+                    {
+                        Clipboard.SetText(translation);
+                    }
+                    catch
+                    {
+                        toolStripStatusLabel1.Text = "Ups :-(. Problém s uložením do schránky. Snad příště :-)";
+                    }
             }
         }
     }
