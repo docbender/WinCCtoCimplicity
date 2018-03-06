@@ -15,7 +15,21 @@ namespace Wendy
             while (brackets.Contains('('))
             {
                 var s = brackets.IndexOf('(');
-                var e = brackets.IndexOf(')');
+                int i = s, bcount = 1;
+                while (i++ < brackets.Length)
+                {
+                    if (brackets[i] == '(')
+                        bcount++;
+                    else if (brackets[i] == ')')
+                        bcount--;
+
+                    if (bcount == 0)
+                        break;
+                }
+                if (bcount != 0)
+                    return false;
+
+                var e = i;
 
                 if (s >= e)
                     return false;
@@ -34,11 +48,21 @@ namespace Wendy
             {
                 var p = exp.Trim(new char[] { '\'' });
 
+                int num;
+
+                if (p.Length == 0 || int.TryParse(p, out num))
+                    continue;
+                if (p.StartsWith("0x"))
+                    if (int.TryParse(p.Substring(2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out num))
+                        continue;
+
                 //not operators -> must be tag
                 if (!(p.Equals("or", StringComparison.InvariantCultureIgnoreCase) || p.Equals("and", StringComparison.InvariantCultureIgnoreCase)
                     || p.Equals("+", StringComparison.InvariantCultureIgnoreCase) || p.Equals("-", StringComparison.InvariantCultureIgnoreCase)
                     || p.Equals("&&", StringComparison.InvariantCultureIgnoreCase) || p.Equals("||", StringComparison.InvariantCultureIgnoreCase)
-                    || p.Length == 0))
+                    || p.Equals("==", StringComparison.InvariantCultureIgnoreCase) || p.Equals("!=", StringComparison.InvariantCultureIgnoreCase)
+                    || p.Equals(">", StringComparison.InvariantCultureIgnoreCase) || p.Equals("<", StringComparison.InvariantCultureIgnoreCase)
+                    || p.Equals(">=", StringComparison.InvariantCultureIgnoreCase) || p.Equals("<=", StringComparison.InvariantCultureIgnoreCase)))
                 {
                     int pos = p.IndexOf("___");
                     if (pos > 0)
@@ -90,6 +114,7 @@ namespace Wendy
 
             origin = origin.Replace("'||'", "' || '").Replace("'||", "' ||").Replace("||'", "|| '");
             origin = origin.Replace("'&&'", "' && '").Replace("'&&", "' &&").Replace("&&'", "&& '");
+            origin = origin.Replace("'=='", "' == '").Replace("'==", "' ==").Replace("=='", "== '");
 
             return ValidateWithBracket(origin);
         }
@@ -102,7 +127,21 @@ namespace Wendy
             if (brackets.Contains('('))
             {
                 var s = brackets.IndexOf('(');
-                var e = brackets.IndexOf(')');
+                int i = s, bcount = 1;
+                while (i++ < brackets.Length)
+                {
+                    if (brackets[i] == '(')
+                        bcount++;
+                    else if (brackets[i] == ')')
+                        bcount--;
+
+                    if (bcount == 0)
+                        break;
+                }
+                if (bcount != 0)
+                    throw new Exception("Brackets mismatch");
+
+                var e = i;
 
                 if (s >= e)
                     throw new Exception("Brackets mismatch");
@@ -110,7 +149,7 @@ namespace Wendy
                 var inner = brackets.Substring(s + 1, e - 1 - s);
 
                 inner = TranslateWithBracket(inner);
-                return TranslateWithBracket(brackets.Substring(0, s)) + " (" + inner + ") " + TranslateWithBracket(brackets.Substring(e+1));
+                return TranslateWithBracket(brackets.Substring(0, s)) + " (" + inner + ") " + TranslateWithBracket(brackets.Substring(e + 1));
             }
 
             var parts = brackets.Split(new char[] { ' ' });
@@ -119,17 +158,38 @@ namespace Wendy
             {
                 if (exp.Length == 0)
                     continue;
+                int num;
                 var p = exp.Trim(new char[] { '\'' });
                 if (result.Length > 0)
                     result.Append(" ");
 
-                if (p.Equals("or", StringComparison.InvariantCultureIgnoreCase) || p.Equals("and", StringComparison.InvariantCultureIgnoreCase)
+                if (int.TryParse(p, out num))
+                    result.Append(p);
+                else if (p.StartsWith("0x") && int.TryParse(p.Substring(2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out num))
+                    result.Append(p);
+                else if (p.Equals("or", StringComparison.InvariantCultureIgnoreCase) || p.Equals("and", StringComparison.InvariantCultureIgnoreCase)
                     || p.Equals("+", StringComparison.InvariantCultureIgnoreCase) || p.Equals("-", StringComparison.InvariantCultureIgnoreCase))
                     result.Append(p);
                 else if (p.Equals("&&", StringComparison.InvariantCultureIgnoreCase))
                     result.Append("and");
                 else if (p.Equals("||", StringComparison.InvariantCultureIgnoreCase))
                     result.Append("or");
+                else if (p.Equals("&", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("band");
+                else if (p.Equals("|", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("bor");
+                else if (p.Equals("==", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("eq");
+                else if (p.Equals("!=", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("ne");
+                else if (p.Equals(">=", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("ge");
+                else if (p.Equals("<=", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("le");
+                else if (p.Equals(">", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("gt");
+                else if (p.Equals("<", StringComparison.InvariantCultureIgnoreCase))
+                    result.Append("lt");
                 else
                     result.Append(convertpointname(p));
             }
@@ -144,10 +204,18 @@ namespace Wendy
 
             origin = origin.Replace("'||'", "' || '").Replace("'||", "' ||").Replace("||'", "|| '");
             origin = origin.Replace("'&&'", "' && '").Replace("'&&", "' &&").Replace("&&'", "&& '");
+            origin = origin.Replace("'|'", "' | '").Replace("'|", "' |").Replace("|'", "| '");
+            origin = origin.Replace("'&'", "' & '").Replace("'&", "' &").Replace("&'", "& '");
+            origin = origin.Replace("'=='", "' == '").Replace("'==", "' ==").Replace("=='", "== '");
+            origin = origin.Replace("'!='", "' != '").Replace("'!=", "' !=").Replace("!='", "!= '");
+            origin = origin.Replace("'>='", "' >= '").Replace("'>=", "' >=").Replace(">='", ">= '");
+            origin = origin.Replace("'>'", "' > '").Replace("'>", "' >").Replace(">'", "> '");
+            origin = origin.Replace("'<='", "' <= '").Replace("'<=", "' <=").Replace("<='", "<= '");
+            origin = origin.Replace("'<'", "' < '").Replace("'<", "' <").Replace("<'", "< '");
 
             StringBuilder result = new StringBuilder();
 
-            return Regex.Replace(TranslateWithBracket(origin).Trim(), @"\s+", " ");
+            return Regex.Replace(TranslateWithBracket(origin).Trim(), @"\s+", " ").Replace("( (","((").Replace(") )", "))");
 
             /*if (origin.Contains("'"))
             {
@@ -322,10 +390,10 @@ namespace Wendy
         {
             int pos = origin.IndexOf('_');
             if (pos < 0)
-                return  @"\\ELAK\" + origin;
+                return @"\\ELAK\" + origin;
 
             int num;
-            if(int.TryParse(origin.Substring(0, pos), out num))
+            if (int.TryParse(origin.Substring(0, pos), out num))
                 return @"\\ELAK\" + origin;
 
             pos = origin.IndexOf('_', pos + 1);

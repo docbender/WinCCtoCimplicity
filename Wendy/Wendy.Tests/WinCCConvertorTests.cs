@@ -23,12 +23,13 @@ namespace Wendy.Tests
             Assert.IsTrue(WinCCConvertor.Validate("KL_KOMP_VT_RMK1_SS00___pr_still_prio_1"));
             Assert.IsTrue(WinCCConvertor.Validate("'diagnostika' && ('206_VW12_pozice' || '206_VW12_cil')"));
             Assert.IsTrue(WinCCConvertor.Validate("'KL_KTLT_VT_231_SS00___bm_bm_bit_395' || 'KL_KTLT_VT_231_SS00___bm_bm_bit_396'  || 'KL_KTLT_VT_231_SS00___bm_bm_bit_397' || 'KL_KTLT_VT_231_SS00___bm_bm_bit_398' "));
-
+            Assert.IsTrue(WinCCConvertor.Validate("('UserAdmin' || 'UserDisp') && (('207_EP09_F4_test_PIN' == 0x3838) || ('207_EP09_F4_test_typ' == 0x30303030) || ('207_EP09_F4_test_typ' == 0x20202020) || ('207_EP09_F4_test_barva' == 0x30303030) || ('207_EP09_F4_test_barva' == 0x20202020))"));
 
             Assert.IsFalse(WinCCConvertor.Validate("'KL_EHBU_FT_204_PB1_2___bm_bm_bit_359and"));
             //Assert.IsFalse(WinCCConvertor.Validate("KL_EHBU_FT_204_PB1_2___mm_bm_bit_359"));
             Assert.IsFalse(WinCCConvertor.Validate("KL_EHBU_FT_204_PB1_2___bm_bm_bit359"));
             Assert.IsFalse(WinCCConvertor.Validate("EHBU_FT_204_PB1_2___bm_bm_bit359"));
+            
         }
 
         [TestMethod()]
@@ -70,6 +71,11 @@ namespace Wendy.Tests
 
             result = WinCCConvertor.Translate("'diagnostika' && ('206_VW12_pozice' || '206_VW12_cil')");
             expected = @"\\ELAK\diagnostika and (\\ELAK\206_VW12_pozice or \\ELAK\206_VW12_cil)";
+            if (!result.Equals(expected))
+                Assert.Fail("Bad result {0} - {1}", result, expected);
+
+            result = WinCCConvertor.Translate("('UserAdmin' || 'UserDisp') && ( ('207_EP09_F4_test_PIN' == 0x3838) || ('207_EP09_F4_test_typ' == 0x30303030) || ('207_EP09_F4_test_typ' == 0x20202020) || ('207_EP09_F4_test_barva' == 0x30303030) || ('207_EP09_F4_test_barva' == 0x20202020))");
+            expected = @"(\\ELAK\UserAdmin or \\ELAK\UserDisp) and ((\\ELAK\207_EP09_F4_test_PIN eq 0x3838) or (\\ELAK\207_EP09_F4_test_typ eq 0x30303030) or (\\ELAK\207_EP09_F4_test_typ eq 0x20202020) or (\\ELAK\207_EP09_F4_test_barva eq 0x30303030) or (\\ELAK\207_EP09_F4_test_barva eq 0x20202020))";
             if (!result.Equals(expected))
                 Assert.Fail("Bad result {0} - {1}", result, expected);
         }

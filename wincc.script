@@ -1,13 +1,67 @@
+Private Declare Function GlobalUnlock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalLock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalAlloc Lib "kernel32" (ByVal wFlags As Long, _
+   ByVal dwBytes As Long) As Long
+Private Declare Function CloseClipboard Lib "user32" () As Long
+Private Declare Function OpenClipboard Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function EmptyClipboard Lib "user32" () As Long
+Private Declare Function lstrcpy Lib "kernel32" (ByVal lpString1 As Any, _
+   ByVal lpString2 As Any) As Long
+Private Declare Function SetClipboardData Lib "user32" (ByVal wFormat _
+   As Long, ByVal hMem As Long) As Long
+
+Private Const GHND = &H42
+Private Const CF_TEXT = 1
+Private Const MAXSIZE = 4096
+
+Function MyJoin(first As String, second As String) As String
+    fLen& = Len(first)
+    sLen& = Len(second)
+    total& = fLen& + sLen&
+   
+    Dim result As String
+    result = String(total&, " ")
+    For i = 1 To Len(first)
+        Mid(result, i, 1) = Mid(first, i, 1)
+    Next i
+    For i = 1 To Len(second)
+        Mid(result, i + fLen&, 1) = Mid(second, i, 1)
+    Next i
+    delka& = Len(result)
+    MyJoin = result
+End Function
+
+Function functionCorrection(ByRef script As String) As String
+    result$ = Replace(Replace(Replace(script, "'||'", "' or '"), "'||", "' or"), "||'", "or '")
+    result$ = Replace(Replace(Replace(result$, "'&&'", "' and '"), "'&&", "' and"), "&&'", "and '")
+    result$ = Replace(Replace(Replace(script, "'|'", "' bor '"), "'|", "' bor"), "|'", "bor '")
+    result$ = Replace(Replace(Replace(result$, "'&'", "' band '"), "'&", "' band"), "&'", "band '")
+    result$ = Replace(Replace(Replace(result$, "'=='", "' eq '"), "'==", "' eq"), "=='", "eq '")
+    result$ = Replace(Replace(Replace(result$, "'!='", "' ne '"), "'!=", "' ne"), "!='", "ne '")
+    result$ = Replace(Replace(Replace(result$, "'>='", "' ge '"), "'>=", "' ge"), ">='", "ge '")
+    result$ = Replace(Replace(Replace(result$, "'<='", "' le '"), "'<=", "' le"), "<='", "le '")
+    result$ = Replace(Replace(Replace(result$, "'>'", "' gt '"), "'>", "' gt"), ">'", "gt '")
+    result$ = Replace(Replace(Replace(result$, "'<'", "' lt '"), "'<", "' lt"), "<'", "lt '")
+    result$ = Replace(Replace(Replace(Replace(result$, "||", "or"), "&&", "and"), "|", "bor"), "&", "band")
+    functionCorrection = Replace(Replace(Replace(Replace(Replace(Replace(result$, "==", "eq"), "!=", "ne"), ">=", "ge"), ">", "gt"), "<=", "le"), "<", "lt")
+End Function
+
 Function actionVisible(obj As HMIObject) As String
     result$ = ""
+    If (obj.ObjectName Like "*ext73") Then
+    result$ = ""
+    End If
     If (obj.Visible.DynamicStateType = hmiDynamicStateTypeScript) Then
         Set script = obj.Visible.Dynamic
-        result$ = result$ & "|scriptVisible=" & script2hex(script.SourceCode)
+        result = "|scriptVisible=" & script2hex(script.SourceCode)
     ElseIf (obj.Visible.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
         Set dialog = obj.Visible.Dynamic
-        result$ = result$ & "|dialogVisible=" & functionCorrection(dialog.SourceCode)
+        result$ = MyJoin("|dialogVisible=", functionCorrection(dialog.SourceCode))
+    ElseIf (obj.Visible.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
+        Set dialog = obj.Visible.Dynamic
+        result$ = "|dialogVisible='" & functionCorrection(dialog.VarName) & "'"
     ElseIf (obj.Visible.DynamicStateType > 0) Then
-        result$ = result$
+
     End If
     
     actionVisible = result$
@@ -21,6 +75,14 @@ Function actionBackColor(obj As HMIObject) As String
     ElseIf (obj.BackColor.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
         Set dialog = obj.BackColor.Dynamic
         result$ = result$ & "|dialogBackColor=" & functionCorrection(dialog.SourceCode)
+        If (dialog.ResultType = hmiResultTypeBool) Then
+            result$ = result$ & "|dialogBackColorPositive=" & dialog.BinaryResultInfo.PositiveValue
+            result$ = result$ & "|dialogBackColorNegative=" & dialog.BinaryResultInfo.NegativeValue
+        ElseIf (dialog.ResultType = hmiResultTypeAnalog) Then
+            'MsgBox "hmiResultTypeAnalog not implemented"
+        Else
+            'MsgBox dialog.ResultType & " not implemented"
+        End If
     ElseIf (obj.BackColor.DynamicStateType > 0) Then
         result$ = result$
     End If
@@ -106,8 +168,44 @@ Function actionFlashingText(obj As HMIObject) As String
     actionFlashingText = result$
 End Function
 
+Function actionX(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Left.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.Left.Dynamic
+        result$ = result$ & "|scriptX=" & script2hex(script.SourceCode)
+    ElseIf (obj.Left.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.Left.Dynamic
+        result$ = result$ & "|dialogX=" & functionCorrection(dialog.SourceCode)
+        result$ = result$ & "|dialogXPositive=" & dialog.BinaryResultInfo.PositiveValue
+        result$ = result$ & "|dialogXNegative=" & dialog.BinaryResultInfo.NegativeValue
+    ElseIf (obj.Left.DynamicStateType > 0) Then
+        result$ = result$
+    End If
+    
+    actionX = result$
+End Function
+
+Function actionY(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Top.DynamicStateType = hmiDynamicStateTypeScript) Then
+        Set script = obj.Top.Dynamic
+        result$ = result$ & "|scriptY=" & script2hex(script.SourceCode)
+    ElseIf (obj.Top.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+        Set dialog = obj.Left.Dynamic
+        result$ = result$ & "|dialogY=" & functionCorrection(dialog.SourceCode)
+        result$ = result$ & "|dialogYPositive=" & dialog.BinaryResultInfo.PositiveValue
+        result$ = result$ & "|dialogYNegative=" & dialog.BinaryResultInfo.NegativeValue
+    ElseIf (obj.Top.DynamicStateType > 0) Then
+        result$ = result$
+    End If
+    
+    actionY = result$
+End Function
+
 Function eventLeftButton(obj As HMIObject) As String
     result$ = ""
+    picname$ = ""
+    destname$ = ""
     If (obj.Events.Count > 0) Then
         For i = 1 To obj.Events.Count
             If (obj.Events(i).EventType = hmiEventTypeMouseLButtonDown) Then
@@ -116,6 +214,14 @@ Function eventLeftButton(obj As HMIObject) As String
                         Dim script As HMIScriptInfo
                         Set script = obj.Events(i).Actions(1)
                         result$ = "|eventLeftButton=" & script2hex(script.SourceCode)
+                    ElseIf (obj.Events(i).Actions(1).ActionType = hmiActionTypeDirectConnection) Then
+                        If (obj.Events(i).Actions(1).DestinationLink.AutomationName = "PictureName") Then
+                            picname$ = obj.Events(i).Actions(1).SourceLink.ObjectName
+                            If (LCase(Right(picname$, 4)) Like ".pdl") Then
+                                picname$ = Left(picname$, Len(picname$) - 4)
+                            End If
+                            result$ = "|eventLeftButtonPicture=" & picname$
+                        End If
                     End If
                 End If
                 Exit For
@@ -123,6 +229,33 @@ Function eventLeftButton(obj As HMIObject) As String
         Next i
     End If
     eventLeftButton = result$
+End Function
+
+Function eventLeftButtonUp(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Events.Count > 0) Then
+        For i = 1 To obj.Events.Count
+            If (obj.Events(i).EventType = hmiEventTypeMouseLButtonUp) Then
+                If (obj.Events(i).Actions.Count > 0) Then
+                    If (obj.Events(i).Actions(1).ActionType = hmiActionTypeScript) Then
+                        Dim script As HMIScriptInfo
+                        Set script = obj.Events(i).Actions(1)
+                        result$ = "|eventLeftButtonUp=" & script2hex(script.SourceCode)
+                    ElseIf (obj.Events(i).Actions(1).ActionType = hmiActionTypeDirectConnection) Then
+                        If (obj.Events(i).Actions(1).DestinationLink.AutomationName = "PictureName") Then
+                            picname$ = obj.Events(i).Actions(1).SourceLink.ObjectName
+                            If (Right(picname$, 4) Like ".PDL" Or Right(picname$, 4) Like ".pdl") Then
+                                picname$ = Left(picname$, Len(picname$) - 4)
+                            End If
+                            result$ = "|eventLeftButtonPicture=" & picname$
+                        End If
+                    End If
+                End If
+                Exit For
+            End If
+        Next i
+    End If
+    eventLeftButtonUp = result$
 End Function
 
 Function eventRightButton(obj As HMIObject) As String
@@ -144,6 +277,25 @@ Function eventRightButton(obj As HMIObject) As String
     eventRightButton = result$
 End Function
 
+Function eventRightButtonUp(obj As HMIObject) As String
+    result$ = ""
+    If (obj.Events.Count > 0) Then
+        For i = 1 To obj.Events.Count
+            If (obj.Events(i).EventType = hmiEventTypeMouseRButtonUp) Then
+                If (obj.Events(i).Actions.Count > 0) Then
+                    If (obj.Events(i).Actions(1).ActionType = hmiActionTypeScript) Then
+                        Dim script As HMIScriptInfo
+                        Set script = obj.Events(i).Actions(1)
+                        result$ = "|eventRightButtonUp=" & script2hex(script.SourceCode)
+                    End If
+                End If
+                Exit For
+            End If
+        Next i
+    End If
+    eventRightButtonUp = result$
+End Function
+
 Function processHMIStatusDisplay(obj As HMIStatusDisplay)
     group$ = ""
     If (Not obj.GroupParent Is Nothing) Then
@@ -158,12 +310,13 @@ Function processHMIStatusDisplay(obj As HMIStatusDisplay)
         
         processHMIStatusDisplay = processHMIStatusDisplay & "|scriptState=" & script2hex(script.SourceCode)
     End If
-    processHMIStatusDisplay = processHMIStatusDisplay & actionVisible(obj) & eventLeftButton(obj)
+    processHMIStatusDisplay = processHMIStatusDisplay & actionVisible(obj) & actionX(obj) & actionY(obj) & eventLeftButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMIStatusText(obj As HMIStaticText)
     Dim script As HMIScriptInfo
     Dim dialog As HMIDynamicDialog
+    Dim variable As HMIVariableTrigger
     
     group$ = ""
     If (Not obj.GroupParent Is Nothing) Then
@@ -179,14 +332,17 @@ Function processHMIStatusText(obj As HMIStaticText)
     ElseIf (obj.Text.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
         Set dialog = obj.Text.Dynamic
         processHMIStatusText = processHMIStatusText & "|dialogText=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.Text.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
+        Set variable = obj.Text.Dynamic
+        processHMIStatusText = processHMIStatusText & "|dialogText='" & functionCorrection(variable.VarName) & "'"
     ElseIf (obj.Text.DynamicStateType > 0) Then
         processHMIStatusText = processHMIStatusText
     End If
     
-    processHMIStatusText = processHMIStatusText & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj)
+    processHMIStatusText = processHMIStatusText & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj) & actionX(obj) & actionY(obj)
     
     processHMIStatusText = processHMIStatusText & "|text=" & Replace(Replace(obj.Text.value, Chr(13) & Chr(10), "@#$"), "=", "@#&")
-    processHMIStatusText = processHMIStatusText & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIStatusText = processHMIStatusText & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMIIOField(obj As HMIIOField)
@@ -201,7 +357,7 @@ Function processHMIIOField(obj As HMIIOField)
     processHMIIOField = "Name=" & getObjectName(obj.ObjectName) & "|Type=IOField|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     processHMIIOField = processHMIIOField & "|xAlign=" & obj.AlignmentLeft & "|yAlign=" & obj.AlignmentTop & "|fontSize=" & obj.FONTSIZE
     processHMIIOField = processHMIIOField & "|backColor=" & obj.BackColor & "|fillStyle=" & obj.FillStyle.value & "|foreColor=" & obj.ForeColor
-    processHMIIOField = processHMIIOField & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj)
+    processHMIIOField = processHMIIOField & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj) & actionX(obj) & actionY(obj)
 
     If (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
         Set actiontrigger = obj.OutputValue.Dynamic
@@ -212,6 +368,9 @@ Function processHMIIOField(obj As HMIIOField)
     ElseIf (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
         Set dialog = obj.OutputValue.Dynamic
         processHMIIOField = processHMIIOField & "|outputValue=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
+        Set actiontrigger = obj.OutputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|outputValue='" & functionCorrection(actiontrigger.VarName) & "'"
     End If
     If (obj.InputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
         Set actiontrigger = obj.InputValue.Dynamic
@@ -222,9 +381,12 @@ Function processHMIIOField(obj As HMIIOField)
     ElseIf (obj.InputValue.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
         Set dialog = obj.InputValue.Dynamic
         processHMIIOField = processHMIIOField & "|inputValue=" & functionCorrection(dialog.SourceCode)
+    ElseIf (obj.InputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
+        Set actiontrigger = obj.InputValue.Dynamic
+        processHMIIOField = processHMIIOField & "|inputValue='" & functionCorrection(actiontrigger.VarName) & "'"
     End If
     processHMIIOField = processHMIIOField & "|dataFormat=" & obj.DataFormat & "|outputFormat=" & obj.OutputFormat
-    processHMIIOField = processHMIIOField & eventLeftButton(obj)
+    processHMIIOField = processHMIIOField & eventLeftButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMIRectangle(obj As HMIRectangle)
@@ -238,8 +400,8 @@ Function processHMIRectangle(obj As HMIRectangle)
     processHMIRectangle = "Name=" & getObjectName(obj.ObjectName) & "|Type=Rectangle|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     
     processHMIRectangle = processHMIRectangle & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
-    processHMIRectangle = processHMIRectangle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
-    processHMIRectangle = processHMIRectangle & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIRectangle = processHMIRectangle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionX(obj) & actionY(obj)
+    processHMIRectangle = processHMIRectangle & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMIRoundRectangle(obj As HMIRoundRectangle)
@@ -254,8 +416,8 @@ Function processHMIRoundRectangle(obj As HMIRoundRectangle)
     processHMIRoundRectangle = processHMIRoundRectangle & "|roundCornerWidth=" & obj.RoundCornerWidth & "|roundCornerHeight=" & obj.RoundCornerHeight
     
     processHMIRoundRectangle = processHMIRoundRectangle & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
-    processHMIRoundRectangle = processHMIRoundRectangle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
-    processHMIRoundRectangle = processHMIRoundRectangle & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIRoundRectangle = processHMIRoundRectangle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionX(obj) & actionY(obj)
+    processHMIRoundRectangle = processHMIRoundRectangle & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMICircle(obj As HMICircle)
@@ -268,8 +430,8 @@ Function processHMICircle(obj As HMICircle)
     End If
     processHMICircle = "Name=" & getObjectName(obj.ObjectName) & "|Type=Circle|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     processHMICircle = processHMICircle & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
-    processHMICircle = processHMICircle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
-    processHMICircle = processHMICircle & eventLeftButton(obj) & eventRightButton(obj)
+    processHMICircle = processHMICircle & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionX(obj) & actionY(obj)
+    processHMICircle = processHMICircle & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMIEllipse(obj As HMIEllipse)
@@ -282,8 +444,8 @@ Function processHMIEllipse(obj As HMIEllipse)
     End If
     processHMIEllipse = "Name=" & getObjectName(obj.ObjectName) & "|Type=Ellipse|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     processHMIEllipse = processHMIEllipse & "|backColor=" & obj.BackColor & "|borderColor=" & obj.BorderColor & "|fillStyle=" & obj.FillStyle.value
-    processHMIEllipse = processHMIEllipse & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
-    processHMIEllipse = processHMIEllipse & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIEllipse = processHMIEllipse & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionX(obj) & actionY(obj)
+    processHMIEllipse = processHMIEllipse & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMILine(obj As HMILine)
@@ -296,7 +458,7 @@ Function processHMILine(obj As HMILine)
     End If
     processHMILine = "Name=" & getObjectName(obj.ObjectName) & "|Type=Line|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     processHMILine = processHMILine & "|backColor=" & obj.BorderBackColor & "|borderColor=" & obj.BorderColor & "|lineStyle=" & obj.BorderStyle.value & "|lineWeight=" & obj.BorderWidth.value & "|lineEndStyle=" & obj.BorderEndStyle.value
-    processHMILine = processHMILine & actionVisible(obj) & actionFlashingLine(obj)
+    processHMILine = processHMILine & actionVisible(obj) & actionFlashingLine(obj) & actionX(obj) & actionY(obj)
 End Function
 
 Function processHMIPolyline(obj As HMIPolyLine)
@@ -320,7 +482,7 @@ Function processHMIPolyline(obj As HMIPolyLine)
     Next i
     
     processHMIPolyline = processHMIPolyline & "|points=" & points$
-    processHMIPolyline = processHMIPolyline & actionVisible(obj) & actionFlashingLine(obj)
+    processHMIPolyline = processHMIPolyline & actionVisible(obj) & actionFlashingLine(obj) & actionX(obj) & actionY(obj)
 End Function
 
 Function processHMICircularArc(obj As HMICircularArc)
@@ -334,7 +496,7 @@ Function processHMICircularArc(obj As HMICircularArc)
     processHMICircularArc = "Name=" & getObjectName(obj.ObjectName) & "|Type=CircularArc|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     processHMICircularArc = processHMICircularArc & "|startAngle=" & obj.StartAngle & "|endAngle=" & obj.EndAngle & "|radius=" & obj.Radius
     processHMICircularArc = processHMICircularArc & "|backColor=" & obj.BorderBackColor & "|borderColor=" & obj.BorderColor & "|lineStyle=" & obj.BorderStyle.value & "|lineWeight=" & obj.BorderWidth.value
-    processHMICircularArc = processHMICircularArc & actionVisible(obj) & actionFlashingLine(obj)
+    processHMICircularArc = processHMICircularArc & actionVisible(obj) & actionFlashingLine(obj) & actionX(obj) & actionY(obj)
 End Function
 
 Function processHMIGroup(obj As HMIGroup)
@@ -358,8 +520,8 @@ Function processHMIGroup(obj As HMIGroup)
     Next i
     
     processHMIGroup = processHMIGroup & "|groupObjects=" & groupObjects$
-    processHMIGroup = processHMIGroup & actionVisible(obj)
-    processHMIGroup = processHMIGroup & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIGroup = processHMIGroup & actionVisible(obj) & actionX(obj) & actionY(obj)
+    processHMIGroup = processHMIGroup & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMI3DPipe(obj As HMIObject)
@@ -380,7 +542,7 @@ Function processHMIObject(obj As HMIObject)
     End If
     processHMIObject = "Name=" & getObjectName(obj.ObjectName) & "|Type=Object|ToolTip=" & Replace(obj.ToolTipText, "=", "@#&") & "|group=" & group$ & "|x=" & obj.Left & "|y=" & obj.Top & "|w=" & obj.Width & "|h=" & obj.Height & "|layer=" & obj.Layer.value
     
-    processHMIObject = processHMIObject & actionVisible(obj) & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIObject = processHMIObject & actionVisible(obj) & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function processHMIButton(obj As HMIButton)
@@ -403,8 +565,8 @@ Function processHMIButton(obj As HMIButton)
     End If
     
     processHMIButton = processHMIButton & "|text=" & Replace(Replace(obj.Text.value, Chr(13) & Chr(10), "@#$"), "=", "@#&")
-    processHMIButton = processHMIButton & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj)
-    processHMIButton = processHMIButton & eventLeftButton(obj) & eventRightButton(obj)
+    processHMIButton = processHMIButton & actionVisible(obj) & actionBackColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionX(obj) & actionY(obj)
+    processHMIButton = processHMIButton & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
 Function getCharts(doc As Document) As String
@@ -456,12 +618,6 @@ Function script2hex(ByRef script As String) As String
         i& = i& + 1
         script2hex = script2hex & Right$(Hex(&H1000000 Or CInt(Asc(Mid(script, i&, 1)))), 2)
     Loop
-End Function
-
-Function functionCorrection(ByRef script As String) As String
-    result$ = Replace(Replace(Replace(script, "'||'", "' or '"), "'||", "' or"), "||'", "or '")
-    result$ = Replace(Replace(Replace(result$, "'&&'", "' and '"), "'&&", "' and"), "&&'", "and '")
-    functionCorrection = Replace(Replace(result$, "||", "or"), "&&", "and")
 End Function
 
 Sub objectsexport(doc As Document)
@@ -618,6 +774,182 @@ Sub exportCurrent()
     objectsexport Application.ActiveDocument
     MsgBox "Hotovo"
 End Sub
+
+
+Function ClipBoard_SetData(MyString As String)
+'PURPOSE: API function to copy text to clipboard
+'SOURCE: www.msdn.microsoft.com/en-us/library/office/ff192913.aspx
+
+Dim hGlobalMemory As Long, lpGlobalMemory As Long
+Dim hClipMemory As Long, X As Long
+
+'Allocate moveable global memory
+  hGlobalMemory = GlobalAlloc(GHND, Len(MyString) + 1)
+
+'Lock the block to get a far pointer to this memory.
+  lpGlobalMemory = GlobalLock(hGlobalMemory)
+
+'Copy the string to this global memory.
+  lpGlobalMemory = lstrcpy(lpGlobalMemory, MyString)
+
+'Unlock the memory.
+  If GlobalUnlock(hGlobalMemory) <> 0 Then
+    MsgBox "Could not unlock memory location. Copy aborted."
+    GoTo OutOfHere2
+  End If
+
+'Open the Clipboard to copy data to.
+  If OpenClipboard(0&) = 0 Then
+    MsgBox "Could not open the Clipboard. Copy aborted."
+    Exit Function
+  End If
+
+'Clear the Clipboard.
+  X = EmptyClipboard()
+
+'Copy the data to the Clipboard.
+  hClipMemory = SetClipboardData(CF_TEXT, hGlobalMemory)
+
+OutOfHere2:
+  If CloseClipboard() = 0 Then
+    MsgBox "Could not close Clipboard."
+  End If
+
+End Function
+
+Function getscreenName(name As String) As String
+    If (Len(name) > 4) Then
+        getscreenName = """" & Left(name, Len(name) - 4) & """"
+    Else
+        getscreenName = name
+    End If
+End Function
+
+
+Function getscreenStructure(doc As Document, index) As String
+    ' index 0 - nazev obrazovky na ktere se nachazim
+    ' index 1 - obrazovka o uroven vysse
+    ' index 2 - obrazovka AT
+    ' index 3 - obrazovka VT
+    ' index 4 - obrazovka FT
+    ' index 5 - predchozi obrazovka
+    ' index 6 - nasledujici obrazovka
+    pic1$ = """" & """"
+    pic2$ = """" & """"
+    pic3$ = """" & """"
+    pic4$ = """" & """"
+    pic5$ = """" & """"
+    pic6$ = """" & """"
+    
+    If (doc.Events.Count = 0) Then
+        getscreenStructure = ""
+        Exit Function
+    End If
+    For i = 1 To doc.Events.Count
+        If (doc.Events(i).EventType = hmiEventTypePictureOpen) Then
+            If (doc.Events(i).Actions.Count > 0) Then
+                If (doc.Events(i).Actions(1).ActionType = hmiActionTypeScript) Then
+                    Dim script As HMIScriptInfo
+                    Set script = doc.Events(i).Actions(1)
+                    scr$ = script.SourceCode
+                    pos& = InStr(1, scr$, "#define PIC1")
+                    If (pos& > 0) Then
+                        pos& = InStr(pos&, scr$, """")
+                        ep& = InStr(pos& + 1, scr$, """")
+                        pic1$ = Mid(scr$, pos& + 1, ep& - pos& - 1)
+                    End If
+                    pos& = InStr(1, scr$, "#define PIC2")
+                    If (pos& > 0) Then
+                        pos& = InStr(pos&, scr$, """")
+                        ep& = InStr(pos& + 1, scr$, """")
+                        pic2$ = Mid(scr$, pos& + 1, ep& - pos& - 1)
+                    End If
+                    pos& = InStr(1, scr$, "#define PIC3")
+                    If (pos& > 0) Then
+                        pos& = InStr(pos&, scr$, """")
+                        ep& = InStr(pos& + 1, scr$, """")
+                        pic3$ = Mid(scr$, pos& + 1, ep& - pos& - 1)
+                    End If
+                    pos& = InStr(1, scr$, "#define PIC4")
+                    If (pos& > 0) Then
+                        pos& = InStr(pos&, scr$, """")
+                        ep& = InStr(pos& + 1, scr$, """")
+                        pic4$ = Mid(scr$, pos& + 1, ep& - pos& - 1)
+                    End If
+                End If
+            End If
+            Exit For
+        End If
+    Next i
+    
+    For i = 1 To doc.HMIObjects.Count
+        Dim obj As HMIObject
+        Set obj = Application.ActiveDocument.HMIObjects(i)
+        If (obj.Type Like "HMIGroup") Then
+            Dim objg As HMIGroup
+            Set objg = obj
+            If (objg.Width = 125 And objg.Height = 51 And objg.GroupedHMIObjects.Count = 2) Then
+                picname$ = """" & """"
+                For j = 1 To objg.Events.Count
+                    If (objg.Events(j).EventType = hmiEventTypeMouseLButtonDown Or objg.Events(j).EventType = hmiEventTypeMouseLButtonUp Or objg.Events(j).EventType = hmiEventTypeMouseClick) Then
+                        If (objg.Events(j).Actions.Count > 0) Then
+                            If (objg.Events(j).Actions(1).ActionType = hmiActionTypeDirectConnection) Then
+                                picname$ = objg.Events(j).Actions(1).SourceLink.ObjectName
+                                Exit For
+                            End If
+                        End If
+                    End If
+                Next j
+                    
+                If (objg.Left < 50) Then
+                    pic5$ = picname$
+                ElseIf (objg.Left > 1100) Then
+                    pic6$ = picname$
+                End If
+            End If
+        End If
+    Next i
+    
+    result$ = "    Structure(" & index & ", 0) = " & """" & Left(doc.name, Len(doc.name) - 4) & """" & Chr(13) & Chr(10)
+    result$ = result$ & "    Structure(" & index & ", 1) = " & getscreenName(pic1$) & Chr(13) & Chr(10)
+    result$ = result$ & "    Structure(" & index & ", 2) = " & getscreenName(pic2$) & Chr(13) & Chr(10)
+    result$ = result$ & "    Structure(" & index & ", 3) = " & getscreenName(pic3$) & Chr(13) & Chr(10)
+    result$ = result$ & "    Structure(" & index & ", 4) = " & getscreenName(pic4$) & Chr(13) & Chr(10)
+    result$ = result$ & "    Structure(" & index & ", 5) = " & getscreenName(pic5$) & Chr(13) & Chr(10)
+    result$ = result$ & "    Structure(" & index & ", 6) = " & getscreenName(pic6$) & Chr(13) & Chr(10)
+    
+    getscreenStructure = result$
+End Function
+
+Sub screenStructureAll()
+
+    Dim doc As Document
+    screens& = 0
+    processed& = 0
+    
+    fileName$ = Dir(Application.ApplicationDataPath & "\*pdl")
+    result$ = ""
+    index& = 0
+   
+    Do While (Len(fileName$) > 0)
+        If (Not (LCase(fileName$) Like "*old.pdl") And Not (LCase(fileName$) Like "*backup.pdl")) Then
+            Set doc = Application.Documents.Open(fileName$, hmiOpenDocumentTypeInvisible)
+            If (doc.Width = 1280 And doc.Height = 1024) Then
+                result$ = result$ & Chr(13) & Chr(10) & getscreenStructure(doc, index&)
+                index& = index& + 1
+                processed& = processed& + 1
+            End If
+            doc.Close
+        End If
+        fileName$ = Dir
+        screens& = screens& + 1
+    Loop
+    
+    ClipBoard_SetData (result$)
+    
+    MsgBox "Zpracovano " & processed& & "/" & screens& & ". Vysledek ulozen do schranky"
+End Sub
+
 
 
 
