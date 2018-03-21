@@ -43,7 +43,8 @@ Function functionCorrection(ByRef script As String) As String
     result$ = Replace(Replace(Replace(result$, "'>'", "' gt '"), "'>", "' gt"), ">'", "gt '")
     result$ = Replace(Replace(Replace(result$, "'<'", "' lt '"), "'<", "' lt"), "<'", "lt '")
     result$ = Replace(Replace(Replace(Replace(result$, "||", "or"), "&&", "and"), "|", "bor"), "&", "band")
-    functionCorrection = Replace(Replace(Replace(Replace(Replace(Replace(result$, "==", "eq"), "!=", "ne"), ">=", "ge"), ">", "gt"), "<=", "le"), "<", "lt")
+    result$ = Replace(result$, "!", " not ")
+    functionCorrection = Replace(Replace(Replace(Replace(Replace(Replace(result$, "==", " eq "), "!=", " ne "), ">=", " ge "), ">", " gt "), "<=", " le "), "<", " lt ")
 End Function
 
 Function actionVisible(obj As HMIObject) As String
@@ -57,6 +58,10 @@ Function actionVisible(obj As HMIObject) As String
     ElseIf (obj.Visible.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
         Set dialog = obj.Visible.Dynamic
         result$ = MyJoin("|dialogVisible=", functionCorrection(dialog.SourceCode))
+        If (dialog.ResultType = hmiResultTypeBool) Then
+            result$ = result$ & "|dialogVisiblePositive=" & dialog.BinaryResultInfo.PositiveValue
+            result$ = result$ & "|dialogVisibleNegative=" & dialog.BinaryResultInfo.NegativeValue
+        End If
     ElseIf (obj.Visible.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
         Set dialog = obj.Visible.Dynamic
         result$ = "|dialogVisible='" & functionCorrection(dialog.VarName) & "'"
