@@ -363,6 +363,8 @@ Function processHMIIOField(obj As HMIIOField)
     processHMIIOField = processHMIIOField & "|xAlign=" & obj.AlignmentLeft & "|yAlign=" & obj.AlignmentTop & "|fontSize=" & obj.FONTSIZE
     processHMIIOField = processHMIIOField & "|backColor=" & obj.BackColor & "|fillStyle=" & obj.FillStyle.value & "|foreColor=" & obj.ForeColor
     processHMIIOField = processHMIIOField & actionVisible(obj) & actionBackColor(obj) & actionForeColor(obj) & actionFlashingLine(obj) & actionFlashingBackground(obj) & actionFlashingText(obj) & actionX(obj) & actionY(obj)
+    
+    processHMIIOField = processHMIIOField & "|fieldType=" & obj.BoxType.value
 
     If (obj.OutputValue.DynamicStateType = hmiDynamicStateTypeVariableDirect) Then
         Set actiontrigger = obj.OutputValue.Dynamic
@@ -390,6 +392,7 @@ Function processHMIIOField(obj As HMIIOField)
         Set actiontrigger = obj.InputValue.Dynamic
         processHMIIOField = processHMIIOField & "|inputValue='" & functionCorrection(actiontrigger.VarName) & "'"
     End If
+       
     processHMIIOField = processHMIIOField & "|dataFormat=" & obj.DataFormat & "|outputFormat=" & obj.OutputFormat
     processHMIIOField = processHMIIOField & eventLeftButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
@@ -574,6 +577,25 @@ Function processHMIButton(obj As HMIButton)
     processHMIButton = processHMIButton & eventLeftButton(obj) & eventRightButton(obj) & eventLeftButtonUp(obj) & eventRightButtonUp(obj)
 End Function
 
+Function getAuthorization(obj As HMIObject)
+    result$ = ""
+    If (Not obj.Operation.Dynamic Is Nothing) Then
+        If (obj.Operation.DynamicStateType = hmiDynamicStateTypeDynamicDialog) Then
+            result$ = result$ & "|controlEnable=" & obj.Operation.Dynamic.SourceCode
+            If (obj.Operation.Dynamic.ResultType = hmiResultTypeBool) Then
+                result$ = result$ & "|controlEnablePositive=" & obj.Operation.Dynamic.BinaryResultInfo.PositiveValue
+                result$ = result$ & "|controlEnableNegative=" & obj.Operation.Dynamic.BinaryResultInfo.NegativeValue
+            End If
+        Else
+            MsgBox "getAuthorization - " & obj.ObjectName & " - Operation.DynamicStateType(" & Operation.DynamicStateType & ")not supported"
+        End If
+    End If
+    
+    result$ = result$ & "|passwordLevel=" & obj.PasswordLevel.value
+    
+    getAuthorization = result$
+End Function
+
 Function getCharts(doc As Document) As String
     result$ = ""
     For i = 1 To doc.HMIObjects.Count
@@ -640,7 +662,7 @@ Sub objectsexport(doc As Document)
             Dim objd As HMIStatusDisplay
             Set objd = obj
             'If (objd.index.IsDynamicable And objd.index.DynamicStateType = 3) Then
-                dataline$ = processHMIStatusDisplay(objd)
+                dataline$ = processHMIStatusDisplay(objd) & getAuthorization(objd)
                 f.WriteLine (dataline$)
             '    IsDynamicable% = IsDynamicable% + 1
             'End If
@@ -652,70 +674,70 @@ Sub objectsexport(doc As Document)
                 IsDynamicable% = IsDynamicable% + 1
             End If
             
-            dataline$ = processHMIStatusText(objt)
+            dataline$ = processHMIStatusText(objt) & getAuthorization(objt)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMIIOField") Then
             Dim objf As HMIIOField
             Set objf = obj
-            dataline$ = processHMIIOField(objf)
+            dataline$ = processHMIIOField(objf) & getAuthorization(objf)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMIRectangle") Then
             Dim objr As HMIRectangle
             Set objr = obj
-            dataline$ = processHMIRectangle(objr)
+            dataline$ = processHMIRectangle(objr) & getAuthorization(objr)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMIRoundRectangle") Then
             Dim objrr As HMIRoundRectangle
             Set objrr = obj
-            dataline$ = processHMIRoundRectangle(objrr)
+            dataline$ = processHMIRoundRectangle(objrr) & getAuthorization(objrr)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMICircle") Then
             Dim objc As HMICircle
             Set objc = obj
-            dataline$ = processHMICircle(objc)
+            dataline$ = processHMICircle(objc) & getAuthorization(objc)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMIEllipse") Then
             Dim obje As HMIEllipse
             Set obje = obj
-            dataline$ = processHMIEllipse(obje)
+            dataline$ = processHMIEllipse(obje) & getAuthorization(obje)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMILine") Then
             Dim objl As HMILine
             Set objl = obj
-            dataline$ = processHMILine(objl)
+            dataline$ = processHMILine(objl) & getAuthorization(objl)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMIPolyLine") Then
             Dim objpl As HMIPolyLine
             Set objpl = obj
-            dataline$ = processHMIPolyline(objpl)
+            dataline$ = processHMIPolyline(objpl) & getAuthorization(objpl)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMICircularArc") Then
             Dim objca As HMICircularArc
             Set objca = obj
-            dataline$ = processHMICircularArc(objca)
+            dataline$ = processHMICircularArc(objca) & getAuthorization(objca)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
         ElseIf (obj.Type Like "HMIGroup") Then
             Dim objg As HMIGroup
             Set objg = obj
-            dataline$ = processHMIGroup(objg)
+            dataline$ = processHMIGroup(objg) & getAuthorization(objg)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
@@ -727,7 +749,7 @@ Sub objectsexport(doc As Document)
         ElseIf (obj.Type Like "HMIButton") Then
             Dim objb As HMIButton
             Set objb = obj
-            dataline$ = processHMIButton(objb)
+            dataline$ = processHMIButton(objb) & getAuthorization(objb)
             f.WriteLine (dataline$)
             
             Count% = Count% + 1
@@ -953,6 +975,134 @@ Sub screenStructureAll()
     ClipBoard_SetData (result$)
     
     MsgBox "Zpracovano " & processed& & "/" & screens& & ". Vysledek ulozen do schranky"
+End Sub
+
+Function getObjectChanges(doc As Document, index) As String
+    result$ = ""
+    ocVypZap = 0
+    ocTotal = 0
+    For i = 1 To doc.HMIObjects.Count
+        Dim obj As HMIObject
+        Set obj = Application.ActiveDocument.HMIObjects(i)
+
+        For j = 1 To obj.Events.Count
+            If (obj.Events(j).EventType = hmiEventTypeObjectChange) Then
+                If (obj.Events(j).Actions.Count > 0) Then
+                    ocTotal = ocTotal + 1
+                    If (obj.Events(j).Actions(1).ActionType = hmiActionTypeScript) Then
+                        Dim script As HMIScriptInfo
+                        Set script = obj.Events(j).Actions(1)
+                        scr$ = script.SourceCode
+'#define SKUT_ZAP "KL_KTLT_FT_202_SS00___bm_bm_bit_121"
+'#define ZAD_VYP "KL_KTLT_FT_202_SS00___bs_soll_22"
+                        posz& = InStr(1, scr$, "#define SKUT_ZAP")
+                        posv& = InStr(1, scr$, "#define ZAD_VYP")
+                        If (posz& > 0 And posv& > 0) Then
+                            posz& = InStr(posz&, scr$, """") + 1
+                            SKUT_ZAP = Mid(scr$, posz&, InStr(posz&, scr$, """") - posz&)
+                            posv& = InStr(posv&, scr$, """") + 1
+                            ZAD_VYP = Mid(scr$, posv&, InStr(posv&, scr$, """") - posv&)
+
+                            'result$ = result$ & "Name=" & getObjectName(obj.ObjectName) & "|Type=" & obj.Type & "|SKUT_ZAP=" & SKUT_ZAP & "|ZAD_VYP=" & ZAD_VYP
+                            result$ = result$ & SKUT_ZAP & ";" & ZAD_VYP
+                            result$ = result$ & Chr(13) & Chr(10)
+                            
+                            ocVypZap = ocVypZap + 1
+                        End If
+                    End If
+                End If
+            End If
+        Next j
+    Next i
+    
+    getObjectChanges = result$
+End Function
+
+Function getObjectChangesCount(doc As Document, index) As Integer
+    ocTotal = 0
+    For i = 1 To doc.HMIObjects.Count
+        Dim obj As HMIObject
+        Set obj = Application.ActiveDocument.HMIObjects(i)
+
+        For j = 1 To obj.Events.Count
+            If (obj.Events(j).EventType = hmiEventTypeObjectChange) Then
+                If (obj.Events(j).Actions.Count > 0) Then
+                    ocTotal = ocTotal + 1
+                End If
+            End If
+        Next j
+    Next i
+    
+    getObjectChangesCount = ocTotal
+End Function
+
+Function getObjectChangesNoVZ(doc As Document, index) As String
+    result$ = ""
+    
+    For i = 1 To doc.HMIObjects.Count
+        Dim obj As HMIObject
+        Set obj = Application.ActiveDocument.HMIObjects(i)
+
+        For j = 1 To obj.Events.Count
+            If (obj.Events(j).EventType = hmiEventTypeObjectChange) Then
+                If (obj.Events(j).Actions.Count > 0) Then
+                    If (obj.Events(j).Actions(1).ActionType = hmiActionTypeScript) Then
+                        Dim script As HMIScriptInfo
+                        Set script = obj.Events(j).Actions(1)
+                        scr$ = script.SourceCode
+                        posz& = InStr(1, scr$, "#define SKUT_ZAP")
+                        posv& = InStr(1, scr$, "#define ZAD_VYP")
+                        If (Not (posz& > 0 And posv& > 0)) Then
+                            result$ = result$ & "Name=" & getObjectName(obj.ObjectName) & "|Type=" & obj.Type & "|Screen=" & doc.name
+                            result$ = result$ & Chr(13) & Chr(10)
+                        End If
+                    ElseIf (obj.Events(j).Actions(1).ActionType = hmiActionTypeDirectConnection) Then
+                        result$ = result$ & "Name=" & getObjectName(obj.ObjectName) & "|Type=" & obj.Type & "|Screen=" & doc.name
+                        result$ = result$ & Chr(13) & Chr(10)
+                    End If
+                End If
+            End If
+        Next j
+    Next i
+    
+    getObjectChangesNoVZ = result$
+End Function
+
+Sub triggerObjectsAll()
+
+    Dim doc As Document
+    screens& = 0
+    processed& = 0
+    ocTotal = 0
+    
+    fileName$ = Dir(Application.ApplicationDataPath & "\*pdl")
+    result$ = ""
+    index& = 0
+   
+    Do While (Len(fileName$) > 0)
+        If (Not (LCase(fileName$) Like "*old.pdl") And Not (LCase(fileName$) Like "*backup.pdl")) Then
+            Set doc = Application.Documents.Open(fileName$, hmiOpenDocumentTypeInvisible)
+            If (doc.Width = 1280 And doc.Height = 1024) Then
+                oc$ = getObjectChanges(doc, index&)
+                'oc$ = getObjectChangesNoVZ(doc, index&)
+                
+                If (Len(oc$) > 0) Then
+                    result$ = result$ & oc$
+                End If
+                index& = index& + 1
+                processed& = processed& + 1
+                
+                ocTotal = ocTotal + getObjectChangesCount(doc, index&)
+            End If
+            doc.Close
+        End If
+        fileName$ = Dir
+        screens& = screens& + 1
+    Loop
+    
+    ClipBoard_SetData (result$)
+    
+    MsgBox "Zpracovano " & processed& & "/" & screens& & ". Vysledek ulozen do schranky. Nalezeno/odpovida " & ocTotal & "/" & UBound(Split(result$, vbCrLf))
 End Sub
 
 

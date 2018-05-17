@@ -82,7 +82,7 @@ namespace Wendy
                                 return false;
                             try
                             {
-                                postfix(post);
+                                postfix(post, pre);
                             }
                             catch
                             {
@@ -115,6 +115,10 @@ namespace Wendy
             origin = origin.Replace("'||'", "' || '").Replace("'||", "' ||").Replace("||'", "|| '");
             origin = origin.Replace("'&&'", "' && '").Replace("'&&", "' &&").Replace("&&'", "&& '");
             origin = origin.Replace("'=='", "' == '").Replace("'==", "' ==").Replace("=='", "== '");
+            origin = origin.Replace("'+'", "' + '").Replace("'+", "' +").Replace("+'", "+ '");
+            origin = origin.Replace("'-'", "' - '").Replace("'-", "' -").Replace("-'", "- '");
+            origin = origin.Replace("'*'", "' * '").Replace("'*", "' *").Replace("*'", "* '");
+            origin = origin.Replace("'/'", "' / '").Replace("'/", "' /").Replace("/'", "/ '");
 
             return ValidateWithBracket(origin);
         }
@@ -212,6 +216,10 @@ namespace Wendy
             origin = origin.Replace("'>'", "' > '").Replace("'>", "' >").Replace(">'", "> '");
             origin = origin.Replace("'<='", "' <= '").Replace("'<=", "' <=").Replace("<='", "<= '");
             origin = origin.Replace("'<'", "' < '").Replace("'<", "' <").Replace("<'", "< '");
+            origin = origin.Replace("'+'", "' + '").Replace("'+", "' +").Replace("+'", "+ '");
+            origin = origin.Replace("'-'", "' - '").Replace("'-", "' -").Replace("-'", "- '");
+            origin = origin.Replace("'*'", "' * '").Replace("'*", "' *").Replace("*'", "* '");
+            origin = origin.Replace("'/'", "' / '").Replace("'/", "' /").Replace("/'", "/ '");
 
             StringBuilder result = new StringBuilder();
 
@@ -276,7 +284,7 @@ namespace Wendy
         }
 
 
-        static string postfix(string origin)
+        static string postfix(string origin, string aggregate)
         {
             const string bm_bm_bit = "bm_bm_bit_";
             const string bs_soll = "bs_soll_";
@@ -299,9 +307,10 @@ namespace Wendy
             {
                 var value = int.Parse(origin.Substring(bm_bm_bit.Length));
 
-                if (value == 1)
+                
+                if (value == 1 && aggregate.Contains("_VB"))
                     return "ERR30";
-                else if (value == 2)
+                else if (value == 2 && aggregate.Contains("_VB"))
                     return "ERR31";
                 else
                     return $"BM.BM.{string.Format("{0:000}", value)}";
@@ -394,7 +403,7 @@ namespace Wendy
 
             int num;
             if (int.TryParse(origin.Substring(0, pos), out num))
-                return @"\\ELAK\" + origin;
+                return @"\\ELAK\" + origin.Replace('_','.');
 
             pos = origin.IndexOf('_', pos + 1);
             if (pos < 0)
@@ -419,8 +428,11 @@ namespace Wendy
             }
 
             if ((pos = result.IndexOf("___", pos + 1)) >= 0)
+            {
                 //agregat & typ(postfix)
-                result = result.Substring(0, pos) + "." + postfix(result.Substring(pos + 3));
+                var pre = result.Substring(0, pos);
+                result = pre + "." + postfix(result.Substring(pos + 3), pre);
+            }
 
             result = result.Replace('_', '.');
 

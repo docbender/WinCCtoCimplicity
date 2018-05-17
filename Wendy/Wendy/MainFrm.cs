@@ -186,24 +186,35 @@ namespace Wendy
 
         private void btnAutoCopy_Click(object sender, EventArgs e)
         {
-            AutoCopy = !AutoCopy;            
+            AutoCopy = !AutoCopy;
         }
         private void tbOrigin_TextChanged(object sender, EventArgs e)
         {
-            if (Valid = WinCCConvertor.Validate(tbOrigin.Text))
+            try
             {
-                var translation = WinCCConvertor.Translate(tbOrigin.Text);
-                tbTranslation.Text = translation;
+                if (Valid = WinCCConvertor.Validate(tbOrigin.Text))
+                {
+                    string translation;
 
-                if (AutoCopy && translation.Length > 0)
-                    try
-                    {
-                        Clipboard.SetText(translation);
-                    }
-                    catch
-                    {
-                        toolStripStatusLabel1.Text = "Ups :-(. Problém s uložením do schránky. Snad příště :-)";
-                    }
+                    translation = WinCCConvertor.Translate(tbOrigin.Text);
+                    tbTranslation.Text = translation;
+
+                    if (AutoCopy && translation.Length > 0)
+                        try
+                        {
+                            Clipboard.SetText(translation);
+                        }
+                        catch
+                        {
+                            toolStripStatusLabel1.Text = "Ups :-(. Problém s uložením do schránky. Snad příště :-)";
+                        }
+                }
+            }
+            catch
+            {
+                toolStripStatusLabel1.Text = "Nelze přeložit :-(";
+                Valid = false;
+                return;
             }
         }
     }
